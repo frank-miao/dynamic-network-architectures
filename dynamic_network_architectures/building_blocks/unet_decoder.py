@@ -43,7 +43,7 @@ class UNetDecoder(nn.Module):
         """
         super().__init__()
         self.deep_supervision = deep_supervision
-        self.encoder = encoder
+        # self.encoder = encoder
         self.num_classes = num_classes
         n_stages_encoder = len(encoder.output_channels)
         if isinstance(n_conv_per_stage, int):
@@ -60,7 +60,9 @@ class UNetDecoder(nn.Module):
         dropout_op_kwargs = encoder.dropout_op_kwargs if dropout_op_kwargs is None else dropout_op_kwargs
         nonlin = encoder.nonlin if nonlin is None else nonlin
         nonlin_kwargs = encoder.nonlin_kwargs if nonlin_kwargs is None else nonlin_kwargs
-
+        
+        self.strides = encoder.strides
+        self.output_channels = encoder.output_channels
 
         # we start with the bottleneck and work out way up
         stages = []
@@ -133,8 +135,8 @@ class UNetDecoder(nn.Module):
         # first we need to compute the skip sizes. Skip bottleneck because all output feature maps of our ops will at
         # least have the size of the skip above that (therefore -1)
         skip_sizes = []
-        for s in range(len(self.encoder.strides) - 1):
-            skip_sizes.append([i // j for i, j in zip(input_size, self.encoder.strides[s])])
+        for s in range(len(self.strides) - 1):
+            skip_sizes.append([i // j for i, j in zip(input_size, self.strides[s])])
             input_size = skip_sizes[-1]
         # print(skip_sizes)
 
@@ -147,7 +149,7 @@ class UNetDecoder(nn.Module):
             # conv blocks
             output += self.stages[s].compute_conv_feature_map_size(skip_sizes[-(s+1)])
             # trans conv
-            output += np.prod([self.encoder.output_channels[-(s+2)], *skip_sizes[-(s+1)]], dtype=np.int64)
+            output += np.prod([self.output_channels[-(s+2)], *skip_sizes[-(s+1)]], dtype=np.int64)
             # segmentation
             if self.deep_supervision or (s == (len(self.stages) - 1)):
                 output += np.prod([self.num_classes, *skip_sizes[-(s+1)]], dtype=np.int64)

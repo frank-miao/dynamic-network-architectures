@@ -71,7 +71,7 @@ class BasicBlockD(nn.Module):
         self.conv2 = ConvDropoutNormReLU(conv_op, output_channels, output_channels, kernel_size, 1, conv_bias, norm_op,
                                          norm_op_kwargs, None, None, None, None)
 
-        self.nonlin2 = nonlin(**nonlin_kwargs) if nonlin is not None else lambda x: x
+        self.nonlin2 = nonlin(**nonlin_kwargs) if nonlin is not None else nn.Identity()
 
         # Stochastic Depth
         self.apply_stochastic_depth = False if stochastic_depth_p == 0.0 else True
@@ -99,7 +99,7 @@ class BasicBlockD(nn.Module):
                 )
             self.skip = nn.Sequential(*ops)
         else:
-            self.skip = lambda x: x
+            self.skip = nn.Identity()
 
     def forward(self, x):
         residual = self.skip(x)
@@ -196,7 +196,7 @@ class BottleneckD(nn.Module):
         self.conv3 = ConvDropoutNormReLU(conv_op, bottleneck_channels, output_channels, 1, 1, conv_bias, norm_op,
                                          norm_op_kwargs, None, None, None, None)
 
-        self.nonlin3 = nonlin(**nonlin_kwargs) if nonlin is not None else lambda x: x
+        self.nonlin3 = nonlin(**nonlin_kwargs) if nonlin is not None else nn.Identity()
 
         # Stochastic Depth
         self.apply_stochastic_depth = False if stochastic_depth_p == 0.0 else True
